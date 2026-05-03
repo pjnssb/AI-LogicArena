@@ -67,5 +67,5 @@ python main.py
 
 ## 6. 开源协议
 
-本项目采用 MIT 协议。
+本项目采用 [Apache License 2.0](LICENSE) 协议。
 
