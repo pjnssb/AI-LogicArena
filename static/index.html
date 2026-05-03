@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 社交推理游戏</title>
+    <link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+    <!-- SETUP SCREEN -->
+    <section id="setupScreen" class="screen-container active">
+        <header class="setup-header">
+            <h1 class="glow-text">AI 社交推理游戏</h1>
+            <p>选择游戏模式，配置AI玩家，观看一场精彩绝伦的推理博弈。</p>
+        </header>
+
+        <div class="setup-content">
+            <!-- API Panel -->
+            <div class="panel">
+                <div class="panel-header"><h2>1. 连接配置</h2></div>
+                <div class="api-inputs form-row">
+                    <div class="form-group flex-2">
+                        <label for="apiBase">API Base URL</label>
+                        <input type="text" id="apiBase" value="https://api.openai.com/v1">
+                    </div>
+                    <div class="form-group flex-2">
+                        <label for="apiKey">API Key</label>
+                        <input type="password" id="apiKey" placeholder="sk-...">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label>&nbsp;</label>
+                        <button id="fetchModelsBtn" class="btn secondary full-width">连接并获取模型</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Mode Selector -->
+            <div class="panel">
+                <div class="panel-header"><h2>2. 游戏模式</h2></div>
+                <div class="game-mode-selector">
+                    <button id="modeUndercover" class="mode-btn active" data-mode="undercover">
+                        <span class="mode-icon">🕵️</span>
+                        <span class="mode-name">谁是卧底</span>
+                    </button>
+                    <button id="modeWerewolf" class="mode-btn" data-mode="werewolf">
+                        <span class="mode-icon">🐺</span>
+                        <span class="mode-name">狼人杀</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Undercover Config -->
+            <div id="undercoverConfig" class="panel">
+                <div class="panel-header"><h2>3. 卧底游戏参数</h2></div>
+                <div class="game-inputs form-row">
+                    <div class="form-group">
+                        <label for="totalPlayers">玩家总数</label>
+                        <input type="number" id="totalPlayers" value="4" min="3" max="10">
+                    </div>
+                    <div class="form-group">
+                        <label for="undercoverCount">卧底人数</label>
+                        <input type="number" id="undercoverCount" value="1" min="1" max="3">
+                    </div>
+                    <div class="form-group flex-2">
+                        <label for="civilianWord">平民词汇</label>
+                        <input type="text" id="civilianWord" value="苹果">
+                    </div>
+                    <div class="form-group flex-2">
+                        <label for="undercoverWord">卧底词汇</label>
+                        <input type="text" id="undercoverWord" value="梨子">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Werewolf Config -->
+            <div id="werewolfConfig" class="panel" style="display: none;">
+                <div class="panel-header"><h2>3. 狼人杀角色配置</h2></div>
+                <p class="config-hint">设置每种角色的数量（设为0表示本局不启用该角色）。狼人数量必须为单数。</p>
+                <div class="role-config-grid">
+                    <div class="role-section">
+                        <h3 class="section-title good-title">🛡️ 好人阵营</h3>
+                        <div class="role-row">
+                            <span class="role-label">平民</span>
+                            <input type="number" id="ww_civilian" value="3" min="0" max="6" class="role-input">
+                        </div>
+                        <div class="role-row">
+                            <span class="role-label">预言家</span>
+                            <input type="number" id="ww_seer" value="1" min="0" max="1" class="role-input">
+                        </div>
+                        <div class="role-row">
+                            <span class="role-label">女巫</span>
+                            <input type="number" id="ww_witch" value="1" min="0" max="1" class="role-input">
+                        </div>
+                        <div class="role-row">
+                            <span class="role-label">猎人</span>
+                            <input type="number" id="ww_hunter" value="1" min="0" max="1" class="role-input">
+                        </div>
+                        <div class="role-row">
+                            <span class="role-label">守卫</span>
+                            <input type="number" id="ww_guard" value="0" min="0" max="1" class="role-input">
+                        </div>
+                        <div class="role-row">
+                            <span class="role-label">白痴</span>
+                            <input type="number" id="ww_idiot" value="0" min="0" max="1" class="role-input">
+                        </div>
+                    </div>
+                    <div class="role-section">
+                        <h3 class="section-title wolf-title">🐺 狼人阵营</h3>
+                        <div class="role-row">
+                            <span class="role-label">普通狼人</span>
+                            <input type="number" id="ww_wolf" value="3" min="1" max="5" class="role-input">
+                        </div>
+                        <div class="role-row">
+                            <span class="role-label">狼王</span>
+                            <input type="number" id="ww_wolfking" value="0" min="0" max="1" class="role-input">
+                        </div>
+                        <div class="role-row">
+                            <span class="role-label">白狼王</span>
+                            <input type="number" id="ww_whitewolfking" value="0" min="0" max="1" class="role-input">
+                        </div>
+                    </div>
+                </div>
+                <div class="role-summary" id="roleSummary">
+                    <!-- 动态更新 -->
+                </div>
+            </div>
+
+            <!-- Player Models Panel -->
+            <div class="panel">
+                <div class="panel-header space-between">
+                    <h2>4. 玩家阵容配置</h2>
+                    <div class="global-model-config">
+                        <span class="label-text">快捷覆盖全部:</span>
+                        <select id="modelSelect" class="small-select">
+                            <option value="">默认模型</option>
+                        </select>
+                        <div class="checkbox">
+                            <input type="checkbox" id="isReasoning">
+                            <label for="isReasoning">带思维链</label>
+                        </div>
+                        <button id="applyDefaultBtn" class="btn outline-btn small-btn">应用</button>
+                    </div>
+                </div>
+                <div id="playerConfigs" class="player-grid">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+
+            <div class="start-action">
+                <button id="startGameBtn" class="btn primary huge-btn">进入对局</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- GAME SCREEN -->
+    <section id="gameScreen" class="screen-container hidden">
+        <aside class="roster-sidebar">
+            <div class="roster-header">
+                <h2>上帝视角</h2>
+                <span id="gameModeBadge" class="mode-badge"></span>
+            </div>
+            <div id="rosterList" class="roster-list">
+                <!-- 动态生成 -->
+            </div>
+        </aside>
+
+        <main class="game-main">
+            <header class="game-topbar">
+                <div class="status-info">
+                    <span class="badge alive-badge">存活: <strong id="alivePlayersCount">-</strong></span>
+                    <span class="badge danger-badge" id="enemyBadge">敌方: <strong id="aliveUndercoversCount">-</strong></span>
+                    <span class="badge phase-badge" id="phaseBadge">阶段: <strong id="currentPhase">-</strong></span>
+                </div>
+                <div class="controls">
+                    <button id="nextStepBtn" class="btn accent">单步推进</button>
+                    <button id="autoPlayBtn" class="btn accent">自动播放</button>
+                    <button id="stopPlayBtn" class="btn danger hidden">停止自动</button>
+                    <button id="backToSetupBtn" class="btn outline-btn">返回大厅</button>
+                </div>
+            </header>
+            
+            <div id="chatContainer" class="chat-container">
+                <!-- 聊天消息 -->
+            </div>
+        </main>
+    </section>
+
+    <script src="common.js?v=3"></script>
+    <script src="undercover.js?v=3"></script>
+    <script src="werewolf.js?v=3"></script>
+    <script src="app.js?v=3"></script>
+</body>
+</html>
